@@ -1,0 +1,51 @@
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h1>Edit Alat</h1>
+    @if($errors->any())
+        <div class="alert alert-danger">
+            <ul>
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+    <form method="POST" action="{{ route('alats.update', $alat) }}">
+        @csrf
+        @method('PUT')
+        <div class="form-group">
+            <label for="nama_alat">Nama Alat</label>
+            <input type="text" name="nama_alat" id="nama_alat" class="form-control" value="{{ old('nama_alat', $alat->nama_alat ?? '') }}">
+        </div>
+        <div class="form-group">
+            <label for="kategori_id">Kategori Id</label>
+            <select name="kategori_id" id="kategori_id" class="form-control">
+                <option value="">-- Select --</option>
+                @foreach($kategoris as $option)
+                    <option value="{{ $option->id }}" {{ old('kategori_id', $alat->kategori_id ?? '') == $option->id ? 'selected' : '' }}>
+                        {{ $option->name ?? $option->title ?? $option->label ?? $option->id }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="stok">Stok</label>
+            <input type="number" name="stok" id="stok" class="form-control" value="{{ old('stok', $alat->stok ?? '') }}">
+        </div>
+        <div class="form-group">
+            <label for="kondisi">Kondisi</label>
+            <select name="kondisi" id="kondisi" class="form-control">
+                <option value="">-- Select --</option>
+                <option value="baik" {{ old('kondisi', $alat->kondisi ?? '') == 'baik' ? 'selected' : '' }}>Baik</option>
+                <option value="rusak ringan" {{ old('kondisi', $alat->kondisi ?? '') == 'rusak ringan' ? 'selected' : '' }}>Rusak Ringan</option>
+                <option value="rusak berat" {{ old('kondisi', $alat->kondisi ?? '') == 'rusak berat' ? 'selected' : '' }}>Rusak Berat</option>
+            </select>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="{{ route('alats.index') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+@endsection
