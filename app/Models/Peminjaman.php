@@ -10,13 +10,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Peminjaman extends Model
 {
-    protected $fillable = ['user_id', 'tanggal_pinjam', 'rencana_kembali', 'status', 'created_at', 'updated_at'];
+    protected $fillable = [
+        'user_id',
+        'tanggal_pinjam',
+        'tanggal_kembali_rencana',
+        'status',
+        'keperluan',
+    ];
 
     protected $table = 'peminjamans';
 
     protected $casts = [
-        'tanggal_pinjam' => 'datetime',
-        'rencana_kembali' => 'date',
+        'tanggal_pinjam' => 'date',
         'tanggal_kembali_rencana' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -30,5 +35,10 @@ class Peminjaman extends Model
     public function detailPeminjamans(): HasMany
     {
         return $this->hasMany(DetailPeminjaman::class);
+    }
+
+    public function pengembalians(): HasMany
+    {
+        return $this->hasMany(Pengembalian::class);
     }
 }

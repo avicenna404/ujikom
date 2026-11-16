@@ -4,17 +4,19 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
     public function index(): View
     {
-        $users = \App\Models\User::query()->paginate(15);
-        return view('pages.users.index', ['users' => $users]);
+        $users = User::orderBy('nama_lengkap')->paginate(15);
+
+        return view('pages.users.index', compact('users'));
     }
 
     public function create(): View
@@ -22,30 +24,49 @@ class UserController extends Controller
         return view('pages.users.create');
     }
 
-    // TODO: extract to FormRequest if business logic grows
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate(['nama_lengkap' => ['required', 'string'], 'username' => ['required', 'string'], 'password' => ['required', 'string'], 'role' => ['string'], 'remember_token' => ['nullable', 'string']]);
-        \App\Models\User::create($validated);
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        $validated = $request->validate([
+            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:100', 'unique:users,username'],
+            'password' => ['required', 'string', 'min:8'],
+            'role' => ['required', Rule::in(['admin', 'petugas', 'peminjam'])],
+        ]);
+
+        User::create($validated);
+
+        return redirect()->route('users.index')->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
-    public function edit(\App\Models\User $user): View
+    public function edit(User $user): View
     {
-        return view('pages.users.edit', ['user' => $user]);
+        return view('pages.users.edit', compact('user'));
     }
 
-    // TODO: extract to FormRequest if business logic grows
-    public function update(Request $request, \App\Models\User $user): RedirectResponse
+    public function update(Request $request, User $user): RedirectResponse
     {
-        $validated = $request->validate(['nama_lengkap' => ['required', 'string'], 'username' => ['required', 'string'], 'password' => ['required', 'string'], 'role' => ['string'], 'remember_token' => ['nullable', 'string']]);
+        $validated = $request->validate([
+            'nama_lengkap' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'min:8'],
+            'role' => ['required', Rule::in(['admin', 'petugas', 'peminjam'])],
+        ]);
+
+        if (blank($validated['password'] ?? null)) {
+            unset($validated['password']);
+        }
+
         $user->update($validated);
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+
+        return redirect()->route('users.index')->with('success', 'Pengguna berhasil diperbarui.');
     }
 
-    public function destroy(\App\Models\User $user): RedirectResponse
+    public function destroy(User $user): RedirectResponse
     {
+        abort_if($user->id === auth()->id(), 422, 'Anda tidak dapat menghapus akun yang sedang digunakan.');
+
         $user->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+
+        return redirect()->route('users.index')->with('success', 'Pengguna berhasil dihapus.');
     }
 }

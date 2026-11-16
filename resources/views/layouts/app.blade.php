@@ -184,7 +184,7 @@
 		<!-- NAVBAR -->
 		<nav class="navbar navbar-default navbar-fixed-top">
 			<div class="brand">
-				<a href="{{ url('/') }}">
+				<a href="{{ auth()->check() ? route(auth()->user()->role === 'peminjam' ? 'katalog-alat.index' : 'dashboard') : route('login') }}">
 					<img src="{{ asset('assets/img/logo.png') }}" alt="SMK Marhas Logo" class="img-responsive logo">
 				</a>
 			</div>
@@ -201,6 +201,22 @@
 								<i class="glyphicon glyphicon-calendar"></i> <span>{{ date('d M Y') }}</span>
 							</a>
 						</li>
+						@auth
+							<li>
+								<a href="#" style="padding-top: 20px; padding-bottom: 20px;">
+									<i class="glyphicon glyphicon-user"></i>
+									{{ auth()->user()->nama_lengkap }} <span class="text-muted">({{ ucfirst(auth()->user()->role) }})</span>
+								</a>
+							</li>
+							<li>
+								<form method="POST" action="{{ route('logout') }}" style="padding: 13px 10px;">
+									@csrf
+									<button type="submit" class="btn btn-default btn-sm">
+										<i class="glyphicon glyphicon-log-out"></i> Logout
+									</button>
+								</form>
+							</li>
+						@endauth
 					</ul>
 				</div>
 			</div>
