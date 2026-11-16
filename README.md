@@ -57,3 +57,21 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+
+fitur
+login
+logout
+crud user
+crud alat
+crud kategori
+crud peminjaman
+crud detail_peminjaman?
+crud pengembalian
+log aktivitas
+menyetujui peminjaman
+memantau pengembalian
+mencetak laporan
+melihat daftar alat
+mengajukan peminjaman
+mengembalikan alat
