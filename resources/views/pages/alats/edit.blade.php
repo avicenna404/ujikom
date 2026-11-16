@@ -1,8 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Edit Alat</h1>
+<div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">Edit Alat</h3>
+    </div>
+    <div class="panel-body">
     @if($errors->any())
         <div class="alert alert-danger">
             <ul>
@@ -45,7 +48,8 @@
         </div>
         <br>
         <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('alats.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('alats.index') }}" class="btn btn-default">Cancel</a>
     </form>
+</div>
 </div>
 @endsection

@@ -1,8 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Create User</h1>
+<div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">Tambah User</h3>
+    </div>
+    <div class="panel-body">
     @if($errors->any())
         <div class="alert alert-danger">
             <ul>
@@ -36,7 +39,8 @@
             <input type="text" name="remember_token" id="remember_token" class="form-control" value="{{ old('remember_token') }}">
         </div>
         <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('users.index') }}" class="btn btn-default">Cancel</a>
     </form>
+</div>
 </div>
 @endsection

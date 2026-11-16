@@ -1,8 +1,11 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h1>Edit Peminjaman</h1>
+<div class="panel">
+    <div class="panel-heading">
+        <h3 class="panel-title">Edit Peminjaman</h3>
+    </div>
+    <div class="panel-body">
     @if($errors->any())
         <div class="alert alert-danger">
             <ul>
@@ -40,7 +43,8 @@
             <input type="text" name="status" id="status" class="form-control" value="{{ old('status', $peminjaman->status ?? '') }}">
         </div>
         <button type="submit" class="btn btn-primary">Update</button>
-        <a href="{{ route('peminjamans.index') }}" class="btn btn-secondary">Cancel</a>
+        <a href="{{ route('peminjamans.index') }}" class="btn btn-default">Cancel</a>
     </form>
+</div>
 </div>
 @endsection

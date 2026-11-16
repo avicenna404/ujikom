@@ -16,3 +16,8 @@ Route::resource('users', \App\Http\Controllers\UserController::class)->except(['
 // BEGIN auto-crud:peminjamans
 Route::resource('peminjamans', \App\Http\Controllers\PeminjamanController::class)->except(['show']);
 // END auto-crud:peminjamans
+Route::get('/detail-peminjamans', [\App\Http\Controllers\DetailPeminjamanController::class, 'index'])->name('detail-peminjamans.index');
+// BEGIN auto-crud:pengembalians
+Route::resource('pengembalians', \App\Http\Controllers\PengembalianController::class)->except(['show']);
+// END auto-crud:pengembalians
+Route::get('/log-aktivitas', [\App\Http\Controllers\LogAktivitasController::class, 'index'])->name('log-aktivitas.index');
