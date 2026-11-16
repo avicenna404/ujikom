@@ -45,6 +45,7 @@
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Login</button>
                 </form>
+                <p class="text-center" style="margin-top:20px;">Belum punya akun? <a href="{{ route('register') }}">Daftar sebagai peminjam</a></p>
             </div>
         </div>
     </main>
