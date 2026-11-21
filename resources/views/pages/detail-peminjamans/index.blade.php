@@ -8,6 +8,12 @@
         <h3 class="panel-title">Daftar Detail Peminjaman</h3>
     </div>
     <div class="panel-body">
+        <form method="GET" action="{{ route('detail-peminjamans.index') }}" class="form-inline" style="margin-bottom:15px;">
+            <div class="form-group"><label for="tanggal_awal">Dari</label> <input id="tanggal_awal" type="date" name="tanggal_awal" class="form-control" value="{{ $tanggalAwal }}"></div>
+            <div class="form-group"><label for="tanggal_akhir">Sampai</label> <input id="tanggal_akhir" type="date" name="tanggal_akhir" class="form-control" value="{{ $tanggalAkhir }}"></div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ route('detail-peminjamans.index') }}" class="btn btn-default">Reset</a>
+        </form>
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover">
                 <thead>
@@ -32,7 +38,7 @@
                             };
                         @endphp
                         <tr>
-                            <td>{{ $details->firstItem() + $loop->index }}</td>
+                            <td>{{ $loop->iteration }}</td>
                             <td>#{{ $detail->peminjaman_id }}</td>
                             <td>{{ $detail->peminjaman?->user?->nama_lengkap ?? '-' }}</td>
                             <td>{{ $detail->alat?->nama_alat ?? '-' }}</td>
@@ -53,7 +59,6 @@
             </table>
         </div>
 
-        {{ $details->links() }}
     </div>
 </div>
 @endsection

@@ -24,7 +24,7 @@ class DatabaseSeeder extends Seeder
                 'role' => 'petugas',
             ],
             [
-                'nama_lengkap' => 'Peminjam Demo',
+                'nama_lengkap' => 'Peminjam',
                 'username' => 'peminjam',
                 'password' => 'peminjam12345',
                 'role' => 'peminjam',

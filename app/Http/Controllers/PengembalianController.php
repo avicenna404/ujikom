@@ -10,24 +10,35 @@ use App\Models\Pengembalian;
 use App\Models\Peminjaman;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PengembalianController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
-        $pengembalians = Pengembalian::with(['peminjaman.user', 'user'])
+        $request->merge([
+            'tanggal_awal' => $request->input('tanggal_awal', now()->startOfMonth()->toDateString()),
+            'tanggal_akhir' => $request->input('tanggal_akhir', now()->toDateString()),
+        ]);
+        $tanggal = $request->validate([
+            'tanggal_awal' => ['required', 'date'],
+            'tanggal_akhir' => ['required', 'date', 'after_or_equal:tanggal_awal'],
+        ]);
+        $tanggalAwal = $tanggal['tanggal_awal'];
+        $tanggalAkhir = $tanggal['tanggal_akhir'];
+        $pengembalians = Pengembalian::select('id', 'peminjaman_id', 'user_id', 'tanggal_kembali_aktual', 'kondisi_kembali', 'denda', 'status')
+            ->with(['peminjaman:id,user_id', 'peminjaman.user:id,nama_lengkap', 'user:id,nama_lengkap'])
+            ->whereBetween('tanggal_kembali_aktual', [$tanggalAwal, $tanggalAkhir])
             ->latest()
-            ->paginate(15);
+            ->get();
 
-        return view('pages.pengembalians.index', compact('pengembalians'));
+        return view('pages.pengembalians.index', compact('pengembalians', 'tanggalAwal', 'tanggalAkhir'));
     }
 
     public function create(): View
     {
-        $peminjamans = Peminjaman::with('user')
+        $peminjamans = Peminjaman::select('id', 'user_id')->with('user:id,nama_lengkap')
             ->where('status', 'dipinjam')
             ->orderByDesc('id')
             ->get();
@@ -74,7 +85,7 @@ class PengembalianController extends Controller
 
     public function edit(Pengembalian $pengembalian): View
     {
-        $peminjamans = Peminjaman::with('user')->orderByDesc('id')->get();
+        $peminjamans = Peminjaman::select('id', 'user_id')->with('user:id,nama_lengkap')->orderByDesc('id')->get();
 
         return view('pages.pengembalians.edit', compact('pengembalian', 'peminjamans'));
     }
@@ -102,31 +113,25 @@ class PengembalianController extends Controller
 
     public function destroy(Pengembalian $pengembalian): RedirectResponse
     {
-        DB::transaction(function () use ($pengembalian): void {
-            $pengembalian = Pengembalian::whereKey($pengembalian->id)->lockForUpdate()->firstOrFail();
+        if ($pengembalian->status === 'diterima') {
+            $peminjaman = Peminjaman::findOrFail($pengembalian->peminjaman_id);
+            $details = $peminjaman->detailPeminjamans()->get();
+            $alatById = Alat::whereIn('id', $details->pluck('alat_id'))->get()->keyBy('id');
 
-            if ($pengembalian->status === 'diterima') {
-                $peminjaman = Peminjaman::whereKey($pengembalian->peminjaman_id)
-                    ->lockForUpdate()
-                    ->firstOrFail();
-
-                foreach ($peminjaman->detailPeminjamans as $detail) {
-                    $alat = Alat::whereKey($detail->alat_id)->lockForUpdate()->firstOrFail();
-
-                    if ($alat->stok < $detail->jumlah) {
-                        throw ValidationException::withMessages([
-                            'pengembalian' => 'Data ini tidak dapat dihapus karena stok alat sudah tidak mencukupi untuk membatalkan pengembalian.',
-                        ]);
-                    }
-
-                    $alat->decrement('stok', $detail->jumlah);
+            foreach ($details as $detail) {
+                $alat = $alatById->get($detail->alat_id);
+                if (! $alat || $alat->stok < $detail->jumlah) {
+                    throw ValidationException::withMessages([
+                        'pengembalian' => 'Data ini tidak dapat dihapus karena stok alat sudah tidak mencukupi untuk membatalkan pengembalian.',
+                    ]);
                 }
-
-                $peminjaman->update(['status' => 'dipinjam']);
             }
-
-            $pengembalian->delete();
-        });
+            foreach ($details as $detail) {
+                $alatById->get($detail->alat_id)->decrement('stok', $detail->jumlah);
+            }
+            $peminjaman->update(['status' => 'dipinjam']);
+        }
+        $pengembalian->delete();
 
         return redirect()->route('pengembalians.index')->with('success', 'Data pengembalian berhasil dihapus.');
     }
@@ -137,35 +142,33 @@ class PengembalianController extends Controller
             'keputusan' => ['required', 'in:diterima,ditolak'],
         ]);
 
-        DB::transaction(function () use ($pengembalian, $validated): void {
-            $pengembalian = Pengembalian::whereKey($pengembalian->id)->lockForUpdate()->firstOrFail();
+        if ($pengembalian->status !== 'pending') {
+            throw ValidationException::withMessages(['keputusan' => 'Pengembalian ini sudah diverifikasi.']);
+        }
 
-            if ($pengembalian->status !== 'pending') {
-                throw ValidationException::withMessages(['keputusan' => 'Pengembalian ini sudah diverifikasi.']);
+        $peminjaman = Peminjaman::findOrFail($pengembalian->peminjaman_id);
+        if ($validated['keputusan'] === 'diterima') {
+            if ($peminjaman->status !== 'dipinjam') {
+                throw ValidationException::withMessages(['keputusan' => 'Peminjaman ini tidak sedang aktif.']);
             }
 
-            $peminjaman = Peminjaman::whereKey($pengembalian->peminjaman_id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if ($validated['keputusan'] === 'diterima') {
-                if ($peminjaman->status !== 'dipinjam') {
-                    throw ValidationException::withMessages(['keputusan' => 'Peminjaman ini tidak sedang aktif.']);
+            $details = $peminjaman->detailPeminjamans()->get();
+            $alatById = Alat::whereIn('id', $details->pluck('alat_id'))->get()->keyBy('id');
+            foreach ($details as $detail) {
+                $alat = $alatById->get($detail->alat_id);
+                if (! $alat) {
+                    throw ValidationException::withMessages(['keputusan' => 'Alat tidak ditemukan.']);
                 }
-
-                foreach ($peminjaman->detailPeminjamans as $detail) {
-                    $alat = Alat::whereKey($detail->alat_id)->lockForUpdate()->firstOrFail();
-                    $alat->increment('stok', $detail->jumlah);
-                }
-
-                $peminjaman->update(['status' => 'dikembalikan']);
             }
-
-            $pengembalian->update([
-                'status' => $validated['keputusan'],
-                'user_id' => auth()->id(),
-            ]);
-        });
+            foreach ($details as $detail) {
+                $alatById->get($detail->alat_id)->increment('stok', $detail->jumlah);
+            }
+            $peminjaman->update(['status' => 'dikembalikan']);
+        }
+        $pengembalian->update([
+            'status' => $validated['keputusan'],
+            'user_id' => auth()->id(),
+        ]);
 
         LogAktivitas::catat(
             'Pengembalian',
@@ -175,15 +178,25 @@ class PengembalianController extends Controller
         return back()->with('success', 'Verifikasi pengembalian berhasil disimpan.');
     }
 
-    public function myIndex(): View
+    public function myIndex(Request $request): View
     {
-        $peminjamans = Peminjaman::with(['detailPeminjamans.alat', 'pengembalians'])
-            ->where('user_id', auth()->id())
-            ->where('status', 'dipinjam')
+        $request->merge([
+            'tanggal_awal' => $request->input('tanggal_awal', now()->startOfMonth()->toDateString()),
+            'tanggal_akhir' => $request->input('tanggal_akhir', now()->toDateString()),
+        ]);
+        $tanggal = $request->validate([
+            'tanggal_awal' => ['required', 'date'],
+            'tanggal_akhir' => ['required', 'date', 'after_or_equal:tanggal_awal'],
+        ]);
+        $tanggalAwal = $tanggal['tanggal_awal'];
+        $tanggalAkhir = $tanggal['tanggal_akhir'];
+        $peminjamans = Peminjaman::with(['detailPeminjamans.alat:id,nama_alat', 'pengembalians'])
+            ->milikUser((int) auth()->id())->status('dipinjam')
+            ->whereBetween('tanggal_pinjam', [$tanggalAwal, $tanggalAkhir])
             ->latest()
             ->get();
 
-        return view('pages.pengembalians.mine', compact('peminjamans'));
+        return view('pages.pengembalians.mine', compact('peminjamans', 'tanggalAwal', 'tanggalAkhir'));
     }
 
     public function storeByPeminjam(Request $request): RedirectResponse

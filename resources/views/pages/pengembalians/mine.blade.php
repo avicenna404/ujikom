@@ -6,6 +6,12 @@
 <div class="panel">
     <div class="panel-heading"><h3 class="panel-title">Pengembalian Alat Saya</h3></div>
     <div class="panel-body">
+        <form method="GET" action="{{ route('pengembalian-saya') }}" class="form-inline" style="margin-bottom:15px;">
+            <div class="form-group"><label for="tanggal_awal">Dari</label> <input id="tanggal_awal" type="date" name="tanggal_awal" class="form-control" value="{{ $tanggalAwal }}"></div>
+            <div class="form-group"><label for="tanggal_akhir">Sampai</label> <input id="tanggal_akhir" type="date" name="tanggal_akhir" class="form-control" value="{{ $tanggalAkhir }}"></div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ route('pengembalian-saya') }}" class="btn btn-default">Reset</a>
+        </form>
         @forelse($peminjamans as $peminjaman)
             @php($pendingReturn = $peminjaman->pengembalians->firstWhere('status', 'pending'))
             <div class="panel panel-default">

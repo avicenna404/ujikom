@@ -15,14 +15,19 @@ class AlatController extends Controller
 {
     public function index(): View
     {
-        $alats = Alat::with('kategori')->paginate(15);
+        $alats = Alat::select('id', 'nama_alat', 'kategori_id', 'stok', 'kondisi')
+            ->with('kategori:id,nama_kategori')
+            ->paginate(15);
 
         return view('pages.alats.index', compact('alats'));
     }
 
     public function catalog(): View
     {
-        $alats = Alat::with('kategori')->orderBy('nama_alat')->paginate(15);
+        $alats = Alat::select('id', 'nama_alat', 'kategori_id', 'stok', 'kondisi')
+            ->with('kategori:id,nama_kategori')
+            ->orderBy('nama_alat')
+            ->paginate(15);
 
         return view('pages.alats.catalog', compact('alats'));
     }

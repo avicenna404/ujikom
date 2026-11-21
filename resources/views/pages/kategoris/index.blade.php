@@ -38,6 +38,7 @@
                 </tbody>
             </table>
         </div>
+        {{ $kategoris->links() }}
     </div>
 </div>
 @endsection

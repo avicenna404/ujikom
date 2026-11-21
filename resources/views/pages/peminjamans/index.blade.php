@@ -12,6 +12,12 @@
     </div>
     <div class="panel-body">
         @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
+        <form method="GET" action="{{ route('peminjamans.index') }}" class="form-inline" style="margin-bottom:15px;">
+            <div class="form-group"><label for="tanggal_awal">Dari</label> <input id="tanggal_awal" type="date" name="tanggal_awal" class="form-control" value="{{ $tanggalAwal }}"></div>
+            <div class="form-group"><label for="tanggal_akhir">Sampai</label> <input id="tanggal_akhir" type="date" name="tanggal_akhir" class="form-control" value="{{ $tanggalAkhir }}"></div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ route('peminjamans.index') }}" class="btn btn-default">Reset</a>
+        </form>
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover">
                 <thead><tr><th>Peminjam</th><th>Alat</th><th>Jumlah</th><th>Tanggal Pinjam</th><th>Rencana Kembali</th><th>Status</th><th>Aksi</th></tr></thead>
@@ -62,7 +68,6 @@
                 </tbody>
             </table>
         </div>
-        {{ $peminjamans->links() }}
     </div>
 </div>
 @endsection

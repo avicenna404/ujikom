@@ -5,11 +5,22 @@ declare(strict_types=1);
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Peminjaman extends Model
 {
+    public function scopeStatus(Builder $query, string $status): Builder
+    {
+        return $query->where('status', $status);
+    }
+
+    public function scopeMilikUser(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
+
     protected $fillable = [
         'user_id',
         'tanggal_pinjam',

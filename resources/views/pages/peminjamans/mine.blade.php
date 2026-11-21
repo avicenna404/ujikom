@@ -9,6 +9,12 @@
         <a href="{{ route('peminjaman-ajukan.create') }}" class="btn btn-primary btn-sm"><i class="glyphicon glyphicon-plus"></i> Ajukan Peminjaman</a>
     </div>
     <div class="panel-body">
+        <form method="GET" action="{{ route('peminjaman-saya') }}" class="form-inline" style="margin-bottom:15px;">
+            <div class="form-group"><label for="tanggal_awal">Dari</label> <input id="tanggal_awal" type="date" name="tanggal_awal" class="form-control" value="{{ $tanggalAwal }}"></div>
+            <div class="form-group"><label for="tanggal_akhir">Sampai</label> <input id="tanggal_akhir" type="date" name="tanggal_akhir" class="form-control" value="{{ $tanggalAkhir }}"></div>
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{{ route('peminjaman-saya') }}" class="btn btn-default">Reset</a>
+        </form>
         <div class="table-responsive">
             <table class="table table-bordered table-striped table-hover">
                 <thead><tr><th>No</th><th>Alat</th><th>Jumlah</th><th>Tanggal</th><th>Rencana Kembali</th><th>Status</th></tr></thead>
@@ -37,7 +43,6 @@
                 </tbody>
             </table>
         </div>
-        {{ $peminjamans->links() }}
     </div>
 </div>
 @endsection
