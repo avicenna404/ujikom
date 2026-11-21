@@ -52,7 +52,6 @@ class PengembalianController extends Controller
             'peminjaman_id' => ['required', 'exists:peminjamans,id'],
             'tanggal_kembali_aktual' => ['required', 'date'],
             'kondisi_kembali' => ['required', 'in:baik,rusak ringan,rusak berat,hilang'],
-            'denda' => ['required', 'integer', 'min:0'],
             'keterangan' => ['nullable', 'string'],
         ]);
 
@@ -74,7 +73,9 @@ class PengembalianController extends Controller
                 'peminjaman_id' => 'Sudah ada pengajuan pengembalian yang menunggu verifikasi.',
             ]);
         }
+        $peminjaman = Peminjaman::findOrFail($validated['peminjaman_id']);
         Pengembalian::create($validated + [
+            'denda' => $peminjaman->hitungDendaTerlambat($validated['tanggal_kembali_aktual']),
             'status' => 'pending',
             'user_id' => null,
         ]);
@@ -96,7 +97,6 @@ class PengembalianController extends Controller
             'peminjaman_id' => ['required', 'exists:peminjamans,id'],
             'tanggal_kembali_aktual' => ['required', 'date'],
             'kondisi_kembali' => ['required', 'in:baik,rusak ringan,rusak berat,hilang'],
-            'denda' => ['required', 'integer', 'min:0'],
             'keterangan' => ['nullable', 'string'],
         ]);
 
@@ -106,7 +106,10 @@ class PengembalianController extends Controller
             ]);
         }
 
-        $pengembalian->update($validated);
+        $peminjaman = Peminjaman::findOrFail($validated['peminjaman_id']);
+        $pengembalian->update($validated + [
+            'denda' => $peminjaman->hitungDendaTerlambat($validated['tanggal_kembali_aktual']),
+        ]);
 
         return redirect()->route('pengembalians.index')->with('success', 'Data pengembalian diperbarui.');
     }
@@ -228,7 +231,7 @@ class PengembalianController extends Controller
             'user_id' => null,
             'tanggal_kembali_aktual' => $validated['tanggal_kembali_aktual'],
             'kondisi_kembali' => $validated['kondisi_kembali'],
-            'denda' => 0,
+            'denda' => $peminjaman->hitungDendaTerlambat($validated['tanggal_kembali_aktual']),
             'keterangan' => $validated['keterangan'] ?? null,
             'status' => 'pending',
         ]);

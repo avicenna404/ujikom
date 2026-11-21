@@ -14,7 +14,7 @@
                 <select id="peminjaman_id" name="peminjaman_id" class="form-control" required>
                     @foreach($peminjamans as $peminjaman)
                         <option value="{{ $peminjaman->id }}" @selected(old('peminjaman_id') == $peminjaman->id)>
-                            #{{ $peminjaman->id }} — {{ $peminjaman->user?->nama_lengkap ?? '-' }}
+                            #{{ $peminjaman->id }} â€” {{ $peminjaman->user?->nama_lengkap ?? '-' }}
                         </option>
                     @endforeach
                 </select>
@@ -32,10 +32,7 @@
                     <option value="hilang">Hilang</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label for="denda">Denda (Rp)</label>
-                <input id="denda" name="denda" type="number" min="0" class="form-control" value="{{ old('denda', 0) }}" required>
-            </div>
+            <p class="text-muted">Denda dihitung otomatis sebesar Rp5.000 per hari keterlambatan.</p>
             <div class="form-group">
                 <label for="keterangan">Keterangan</label>
                 <textarea id="keterangan" name="keterangan" class="form-control">{{ old('keterangan') }}</textarea>

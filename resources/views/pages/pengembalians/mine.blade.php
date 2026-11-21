@@ -21,6 +21,7 @@
                 </div>
                 <div class="panel-body">
                     <p>Alat: {{ $peminjaman->detailPeminjamans->map(fn ($detail) => ($detail->alat?->nama_alat ?? 'Alat dihapus') . ' (' . $detail->jumlah . ')')->join(', ') }}</p>
+                    <p>Estimasi denda jika dikembalikan hari ini: Rp{{ number_format($peminjaman->hitungDendaTerlambat(today()->toDateString()), 0, ',', '.') }}</p>
                     @if($pendingReturn)
                         <p><span class="label label-warning">Menunggu verifikasi</span> Pengajuan tanggal {{ $pendingReturn->tanggal_kembali_aktual?->format('d M Y') }}.</p>
                     @else

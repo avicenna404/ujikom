@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 class Peminjaman extends Model
 {
@@ -51,5 +52,14 @@ class Peminjaman extends Model
     public function pengembalians(): HasMany
     {
         return $this->hasMany(Pengembalian::class);
+    }
+
+    public function hitungDendaTerlambat(string $tanggalAktual): int
+    {
+        $rencana = Carbon::parse($this->tanggal_kembali_rencana)->startOfDay();
+        $aktual = Carbon::parse($tanggalAktual)->startOfDay();
+        $hariTerlambat = max(0, (int) $rencana->diffInDays($aktual, false));
+
+        return $hariTerlambat * 5000;
     }
 }

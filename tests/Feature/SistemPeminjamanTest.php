@@ -119,10 +119,52 @@ class SistemPeminjamanTest extends TestCase
         ])->assertRedirect('/pengembalian-saya');
         $pengembalian = Pengembalian::where('peminjaman_id', $peminjaman->id)->firstOrFail();
         $this->assertSame('pending', $pengembalian->status);
+        $this->assertSame(0, $pengembalian->denda);
         $this->actingAs($petugas)->post('/pengembalians/' . $pengembalian->id . '/verifikasi', ['keputusan' => 'diterima'])->assertRedirect();
         $this->assertSame('diterima', $pengembalian->fresh()->status);
         $this->assertSame('dikembalikan', $peminjaman->fresh()->status);
         $this->assertSame(10, $alat->fresh()->stok);
+    }
+
+    public function test_denda_otomatis_dihitung_di_semua_alur_dan_dihitung_ulang_saat_tanggal_diedit(): void
+    {
+        $this->travelTo(now()->setDate(2026, 11, 21)->startOfDay());
+        $admin = $this->user('admin');
+        $peminjam = $this->user('peminjam');
+        $petugas = $this->user('petugas');
+        $peminjaman = Peminjaman::create([
+            'user_id' => $peminjam->id, 'tanggal_pinjam' => '2026-11-01',
+            'tanggal_kembali_rencana' => '2026-11-18', 'status' => 'dipinjam',
+        ]);
+
+        $this->actingAs($peminjam)->post('/pengembalian-saya', [
+            'peminjaman_id' => $peminjaman->id, 'tanggal_kembali_aktual' => '2026-11-21',
+            'kondisi_kembali' => 'baik', 'denda' => 1,
+        ])->assertRedirect('/pengembalian-saya');
+        $pengembalian = Pengembalian::where('peminjaman_id', $peminjaman->id)->firstOrFail();
+        $this->assertSame(15000, $pengembalian->denda);
+
+        $this->actingAs($admin)->put('/pengembalians/' . $pengembalian->id, [
+            'peminjaman_id' => $peminjaman->id, 'tanggal_kembali_aktual' => '2026-11-17',
+            'kondisi_kembali' => 'baik', 'denda' => 999999,
+        ])->assertRedirect('/pengembalians');
+        $this->assertSame(0, $pengembalian->fresh()->denda);
+        $this->put('/pengembalians/' . $pengembalian->id, [
+            'peminjaman_id' => $peminjaman->id, 'tanggal_kembali_aktual' => '2026-11-19',
+            'kondisi_kembali' => 'baik', 'denda' => 0,
+        ])->assertRedirect('/pengembalians');
+        $this->assertSame(5000, $pengembalian->fresh()->denda);
+
+        $peminjamanPetugas = Peminjaman::create([
+            'user_id' => $peminjam->id, 'tanggal_pinjam' => '2026-11-01',
+            'tanggal_kembali_rencana' => '2026-11-18', 'status' => 'dipinjam',
+        ]);
+        $this->actingAs($admin)->post('/pengembalians', [
+            'peminjaman_id' => $peminjamanPetugas->id, 'tanggal_kembali_aktual' => '2026-11-20',
+            'kondisi_kembali' => 'baik', 'denda' => 0,
+        ])->assertRedirect('/pengembalians');
+        $this->assertSame(10000, Pengembalian::where('peminjaman_id', $peminjamanPetugas->id)->value('denda'));
+        $this->travelBack();
     }
 
     public function test_filter_tanggal_berfungsi_pada_transaksi_log_dan_laporan(): void
